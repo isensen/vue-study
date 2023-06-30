@@ -3,8 +3,12 @@ import { toArray, isFunction } from '../util/index'
 
 export function initUse(Vue: GlobalAPI) {
   Vue.use = function (plugin: Function | any) {
+
+    //相当于安装过的组件的缓存 
     const installedPlugins =
       this._installedPlugins || (this._installedPlugins = [])
+    
+    // 避免重复安装 
     if (installedPlugins.indexOf(plugin) > -1) {
       return this
     }

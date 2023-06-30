@@ -1,7 +1,12 @@
+/**
+ * global.d.ts是一个TypeScript中用于声明全局变量和类型的文件。它通常包含一些定义在全局范围内的类型、接口、枚举、变量、函数等，以便在项目中的任何位置都可以使用它们。 
+ * 
+ */
 declare const __DEV__: boolean
 declare const __TEST__: boolean
 declare const __GLOBAL__: boolean
 
+// 通过在全局的Window对象上定义这个对象，开发工具可以访问它并使用它来与被检查的Vue.js应用程序进行通信。
 interface Window {
   __VUE_DEVTOOLS_GLOBAL_HOOK__: DevtoolsHook
 }

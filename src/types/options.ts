@@ -15,6 +15,7 @@ type InjectKey = string | Symbol
 
 /**
  * @internal
+ * vue组件的选项类型
  */
 export type ComponentOptions = {
   // v3
@@ -73,6 +74,7 @@ export type ComponentOptions = {
 
   // context
   provide?: Record<string | symbol, any> | (() => Record<string | symbol, any>)
+  // 可以看出, 可以是对象,也可以是数组
   inject?:
     | { [key: string]: InjectKey | { from?: InjectKey; default?: any } }
     | Array<string>

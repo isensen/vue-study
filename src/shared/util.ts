@@ -1,13 +1,17 @@
+// emptyObject是一个没有任何属性的空对象, Object.freeze方法会冻结一个对象，使其不可变。这意味着无法向该对象添加、删除或修改属性
 export const emptyObject: Record<string, any> = Object.freeze({})
 
 export const isArray = Array.isArray
 
 // These helpers produce better VM code in JS engines due to their
 // explicitness and function inlining.
+// 在函数的声明中，使用了类型谓词v is undefined | null，它表示如果函数返回true，则表示参数v的类型是undefined或null。这样做有助
+// 于提高代码的类型安全性，避免对非空值使用undefined或null的方法或属性。
 export function isUndef(v: any): v is undefined | null {
   return v === undefined || v === null
 }
 
+// 定义了一个名为isDef的函数，它接受一个泛型类型的参数v，并返回一个类型谓词，用于指示参数v是否为非空类型。
 export function isDef<T>(v: T): v is NonNullable<T> {
   return v !== undefined && v !== null
 }
@@ -33,6 +37,10 @@ export function isPrimitive(value: any): boolean {
   )
 }
 
+// 为什么不用function isFunction(value: any): boolean
+// value is (...args: any[]) => any 是  TypeScript 中的类型谓词语法 ，它表示这个函数会在运行时检查传入的参数 value 是否是一个函数，并返回一个布尔值。
+// 这个类型谓词语法可以帮助 TypeScript 在后续的代码中推断出参数的精确类型，从而提供更严格的类型检查。
+// 它可以提供更严格的类型检查和更精确的类型推断
 export function isFunction(value: any): value is (...args: any[]) => any {
   return typeof value === 'function'
 }
@@ -106,6 +114,7 @@ export function toNumber(val: string): number | string {
 /**
  * Make a map and return a function for checking if a key
  * is in that map.
+ * 返回一个函数,来验证参数是否在map里...
  */
 export function makeMap(
   str: string,
@@ -157,6 +166,8 @@ export function hasOwn(obj: Object | Array<any>, key: string): boolean {
 
 /**
  * Create a cached version of a pure function.
+ * 用于创建一个纯函数的缓存版本。它接受一个参数 fn，它是一个纯函数，它的输入为一个字符串，输出为一个任意类型的值。cached 函数返回一个新函数 cachedFn，
+ * 它也接受一个字符串参数，并返回 fn 函数对该字符串的计算结果
  */
 export function cached<R>(fn: (str: string) => R): (sr: string) => R {
   const cache: Record<string, R> = Object.create(null)
@@ -264,11 +275,18 @@ export function toObject(arr: Array<any>): object {
  * Perform no operation.
  * Stubbing args to make Flow happy without leaving useless transpiled code
  * with ...rest (https://flow.org/blog/2017/05/07/Strict-Function-Call-Arity/).
+ * 这段代码定义了一个名为 noop 的函数，它没有任何实际操作，只是为了让 Flow 在不产生无用转换代码的情况下保持正常运行。
+ * 
+ * 这个函数的主要作用是占位，它可以在需要传递函数作为参数的情况下使用，以避免在没有传递函数时出现错误。
+ * 例如，如果有一个函数需要传递一个回调函数作为参数，但是调用该函数时不需要传递回调函数，就可以使用 noop 函数作为占位符，以保证代码的正确性和可读性。
  */
 export function noop(a?: any, b?: any, c?: any) {}
 
 /**
  * Always return false.
+ * 这个函数的主要作用是用作默认的否定判断
+ * 例如在条件判断时需要提供一个默认值，或者在函数中需要返回一个布尔值但不需要进行实际的计算时可以使用这个函数
+ * 这种方式可以避免在没有明确的否定条件时出现错误，同时提高代码的可读性和可维护性。
  */
 export const no = (a?: any, b?: any, c?: any) => false
 
@@ -276,6 +294,13 @@ export const no = (a?: any, b?: any, c?: any) => false
 
 /**
  * Return the same value.
+ * 作默认的返回函数，例如在需要对某个值进行转换或处理时，可以使用这个函数将其返回原值
+ * 例: 如果没有传入 transform 参数，那么默认使用 identity 函数，将 value 原样返回。如果传入了 transform 参数，那么就会使用传入的函数对 value 进行处理，
+ * 并将处理后的结果返回
+ * function doSomething(value, transform = identity) {
+ *    const transformedValue = transform(value)
+ *    // Do something with transformedValue
+ * }
  */
 export const identity = (_: any) => _
 

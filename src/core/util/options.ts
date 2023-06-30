@@ -1,3 +1,6 @@
+/**
+ * 利用合并策略, 实现options的合并
+ */
 import config from '../config'
 import { warn } from './debug'
 import { set } from '../observer/index'
@@ -23,6 +26,7 @@ import type { ComponentOptions } from 'types/options'
  * Option overwriting strategies are functions that handle
  * how to merge a parent option value and a child option
  * value into the final value.
+ * 选项合并策略, 初始化时配置里可以配
  */
 const strats = config.optionMergeStrategies
 
@@ -282,6 +286,7 @@ strats.provide = function (parentVal: Object | null, childVal: Object | null) {
 
 /**
  * Default strategy.
+ * 默认的合并策略是当子没有的时候, 就用父, 不然就用子
  */
 const defaultStrat = function (parentVal: any, childVal: any): any {
   return childVal === undefined ? parentVal : childVal
@@ -289,6 +294,7 @@ const defaultStrat = function (parentVal: any, childVal: any): any {
 
 /**
  * Validate component names
+ * 检查组件的名称的规范
  */
 function checkComponents(options: Record<string, any>) {
   for (const key in options.components) {
@@ -298,6 +304,7 @@ function checkComponents(options: Record<string, any>) {
 
 export function validateComponentName(name: string) {
   if (
+    // 该正则表达式匹配符合 html5 规范中自定义元素名称的字符串。
     !new RegExp(`^[a-zA-Z][\\-\\.0-9_${unicodeRegExp.source}]*$`).test(name)
   ) {
     warn(
@@ -307,6 +314,9 @@ export function validateComponentName(name: string) {
         'should conform to valid custom element name in html5 specification.'
     )
   }
+
+  // 再检查是否使用了内建和保留的标签
+  // isBuiltInTag = makeMap('slot,component', true)
   if (isBuiltInTag(name) || config.isReservedTag(name)) {
     warn(
       'Do not use built-in or reserved HTML elements as component ' +
@@ -319,6 +329,8 @@ export function validateComponentName(name: string) {
 /**
  * Ensure all props option syntax are normalized into the
  * Object-based format.
+ * 用于规范化组件的 props 选项语法，确保其格式为基于对象的格式。
+ * props可以是数组, 还可以是对象, 这里统一处理为对象格式
  */
 function normalizeProps(options: Record<string, any>, vm?: Component | null) {
   const props = options.props
@@ -354,6 +366,7 @@ function normalizeProps(options: Record<string, any>, vm?: Component | null) {
 
 /**
  * Normalize all injections into Object-based format
+ * 用于规范化组件的 inject 选项语法，确保其格式为基于对象的格式。
  */
 function normalizeInject(options: Record<string, any>, vm?: Component | null) {
   const inject = options.inject
@@ -381,6 +394,7 @@ function normalizeInject(options: Record<string, any>, vm?: Component | null) {
 
 /**
  * Normalize raw function directives into object format.
+ * 统一处理指令
  */
 function normalizeDirectives(options: Record<string, any>) {
   const dirs = options.directives
@@ -413,6 +427,8 @@ export function mergeOptions(
   child: Record<string, any>,
   vm?: Component | null
 ): ComponentOptions {
+
+  // 开发模式时才检查组件名称规范
   if (__DEV__) {
     checkComponents(child)
   }
@@ -422,18 +438,29 @@ export function mergeOptions(
     child = child.options
   }
 
+  // 规范化props(props可以是数组格式,也可以是对象格式,这里会统一处理为对象格式)
   normalizeProps(child, vm)
+  // 规范化inject(inject可以是数组格式,也可以是对象格式,这里会统一处理为对象格式)
   normalizeInject(child, vm)
+  // 规范化指令
   normalizeDirectives(child)
 
   // Apply extends and mixins on the child options,
   // but only if it is a raw options object that isn't
   // the result of another mergeOptions call.
   // Only merged options has the _base property.
+  // 用于在子组件选项对象上应用 extends 和 mixins 选项，并将它们合并到父组件选项对象中。
+  // 该代码块首先会判断子组件选项对象 child 是否具有 _base 属性，如果没有，则说明它是一个原始的选项对象，而不是另一个 mergeOptions 调用的结果，因此可以对其进行合并操作。
   if (!child._base) {
+
+    // 如果子组件选项对象具有 extends 选项，则会调用 mergeOptions 函数将其合并到父组件选项对象 parent 中。其中，vm 参数表示组件实例对象，用于在合并过程中输出警告信息
+    // 子的会覆盖父的,没毛病
     if (child.extends) {
       parent = mergeOptions(parent, child.extends, vm)
     }
+
+    // 如果子组件选项对象具有 mixins 选项，则会遍历 mixins 数组，并对每个混入对象调用 mergeOptions 函数将其合并到父组件选项对象 parent 中。
+    // 子的会覆盖父的,没毛病
     if (child.mixins) {
       for (let i = 0, l = child.mixins.length; i < l; i++) {
         parent = mergeOptions(parent, child.mixins[i], vm)

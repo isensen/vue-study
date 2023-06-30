@@ -1,3 +1,6 @@
+/**
+ * elements 元素相关工具
+ */
 import { inBrowser } from 'core/util/env'
 import { makeMap } from 'shared/util'
 

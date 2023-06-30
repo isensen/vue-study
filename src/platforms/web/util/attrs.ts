@@ -1,3 +1,6 @@
+/**
+ * attrs 相关的工具函数
+ */
 import { makeMap } from 'shared/util'
 
 // these are reserved for web because they are directly compiled away
@@ -19,12 +22,15 @@ export const mustUseProp = (
   )
 }
 
+// 用于判断给定的属性是否是一个枚举属性。
 export const isEnumeratedAttr = makeMap('contenteditable,draggable,spellcheck')
 
+// 用于判断给定的值是否是一个有效的 contenteditable 属性值
 const isValidContentEditableValue = makeMap(
   'events,caret,typing,plaintext-only'
 )
 
+// 将给定的枚举属性值转换为对应的字符串形式
 export const convertEnumeratedValue = (key: string, value: any) => {
   return isFalsyAttrValue(value) || value === 'false'
     ? 'false'
@@ -53,6 +59,8 @@ export const getXlinkProp = (name: string): string => {
   return isXlink(name) ? name.slice(6, name.length) : ''
 }
 
+// 用于判断给定的属性值是否为一个 falsy 值。
+// 如果 val 的值为 null 或 undefined(undefined==null)，或者等于 false，则函数返回 true，否则返回 false
 export const isFalsyAttrValue = (val: any): boolean => {
   return val == null || val === false
 }

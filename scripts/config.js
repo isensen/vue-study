@@ -27,10 +27,33 @@ const resolve = p => {
 
 // we are bundling forked consolidate.js in compiler-sfc which dynamically
 // requires a ton of template engines which should be ignored.
+
+// Vue.js 团队已经对 consolidate.js 进行了修改，并将其打包在 compiler-sfc 模块中。打包 consolidate.js 的目的是为了提供一个统一的接口，让开发者可
+// 以使用不同的模板引擎来编译单文件组件中的模板字符串。 但是，修改过的 consolidate.js 动态地引入了大量的模板引擎，这些引擎可能并不是特定项目或使用场
+// 景所需要的。这可能会导致打包后的文件体积变大，性能下降。所以这些模板引擎需要在构建时忽略掉
+// 为了解决这个问题，Vue.js 团队可以考虑修改 consolidate.js，只引入项目实际需要的模板引擎。这可以通过根据项目的配置或构建环境，在代码中条件性地引入
+// 模块来实现。
+
+// consolidate.js 是一个 Node.js 模板引擎的统一接口封装库，它可以让开发者通过一套 API 使用多种不同的模板引擎。
+// consolidate.js 支持的模板引擎包括但不限于 EJS、Handlebars、Jade/Pug、Swig、Underscore 等。
+// sfc单文件组件的解析和编译器, sfc 需要在解析过程中将模板字符串转换为可执行的 JavaScript 代码，这就需要使用模板引擎
+// Vue.js 2.x 中的 sfc 模块使用 consolidate.js 来实现对单文件组件中的模板字符串的编译。具体来说，sfc 中有一个名为 compileTemplate 的函数，
+// 它接受模板字符串、编译选项和模板引擎名称等参数，然后使用 consolidate.js 将模板字符串编译为可执行的 JavaScript 代码，并返回编译结果。
+// 这个编译结果可以被 Vue.js 的运行时代码使用，用于渲染组件。
 const consolidatePath = require.resolve('@vue/consolidate/package.json', {
   paths: [path.resolve(__dirname, '../packages/compiler-sfc')]
 })
 
+// 对于单个配置，它是遵循 Rollup 的构建规则的
+// entry:  构建的入口 JS 文件地址
+// dest:   构建后的 JS 文件地址
+// format: 构建的格式
+// cjs:    构建出来的文件遵循CommonJS 规范
+// es:     构建出来的文件遵循 ES Module 规范
+// umd:    构建出来的文件遵循 UMD 规范。
+
+// Vue2 中，最终渲染都是通过 render 函数，如果写 template 属性，则需要编译成 render 函数，那么这个编译过程会发生运行时，所以需要带有编译器的版本。
+// 根据需求选择构建不同版本
 const builds = {
   // Runtime only (CommonJS). Used by bundlers e.g. Webpack & Browserify
   'runtime-cjs-dev': {

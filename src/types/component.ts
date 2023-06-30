@@ -10,6 +10,7 @@ import { EffectScope } from 'v3/reactivity/effectScope'
 
 /**
  * @internal
+ * 这个相当于vue组件对象的类型
  */
 export declare class Component {
   constructor(options?: any)

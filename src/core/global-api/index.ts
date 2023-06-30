@@ -1,8 +1,13 @@
 import config from '../config'
+// 实现的use
 import { initUse } from './use'
+// 实现的mixin
 import { initMixin } from './mixin'
+// 实现Vue的extend 
 import { initExtend } from './extend'
+// Vue.component  Vue.directive  Vue.filter的实现
 import { initAssetRegisters } from './assets'
+
 import { set, del } from '../observer/index'
 import { ASSET_TYPES } from 'shared/constants'
 import builtInComponents from '../components/index'

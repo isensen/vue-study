@@ -28,6 +28,7 @@ import type {
 import type { Component } from 'types/component'
 import type { ComponentOptions, InternalComponentOptions } from 'types/options'
 
+// 从Options中获取组件名称
 export function getComponentName(options: ComponentOptions) {
   return options.name || options.__name || options._componentTag
 }

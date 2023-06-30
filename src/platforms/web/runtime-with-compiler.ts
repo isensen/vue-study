@@ -12,11 +12,16 @@ import {
 import type { Component } from 'types/component'
 import type { GlobalAPI } from 'types/global-api'
 
+// 它使用了一个名为 cached 的函数，用于缓存函数查找的结果 
 const idToTemplate = cached(id => {
   const el = query(id)
   return el && el.innerHTML
 })
 
+
+// Vue hydrating 是指在服务端渲染 (SSR) 中将服务器端生成的 HTML 模板以及数据，与客户端生成的 Vue 实例进行关联，使得客户端可以接管服务器端生成的 HTML 
+// 模板以及数据的状态，继续完成后续的交互与渲染。
+// 先保存原来Vue原型上的$mount方法, 然后再在新定义的$mount里去加一些前置逻辑, 再去调用备份的原来的$mount方法
 const mount = Vue.prototype.$mount
 Vue.prototype.$mount = function (
   el?: string | Element,
@@ -25,6 +30,10 @@ Vue.prototype.$mount = function (
   el = el && query(el)
 
   /* istanbul ignore if */
+  // Vue 不建议将实例挂载到 body 上, documentElement同理，这是因为挂载到 body 上可能会导致一些问题，比如：
+  // 1. 覆盖 body 内容：如果将 Vue 实例挂载到 body 上，它将覆盖原有的 body 内容，这可能会导致一些不可预料的问题。
+  // 2. CSS 样式影响：将 Vue 实例挂载到 body 上可能会影响全局 CSS 样式，因为 Vue 实例的样式将被继承到整个页面中，而不仅仅是应用内部。
+  // 3. 其他问题：将 Vue 实例挂载到 body 上可能会导致一些其他问题，比如事件冲突、性能问题等。
   if (el === document.body || el === document.documentElement) {
     __DEV__ &&
       warn(
@@ -57,10 +66,15 @@ Vue.prototype.$mount = function (
         }
         return this
       }
+
+    // 如果没有template, 但有el时, 会尝试使用el
     } else if (el) {
       // @ts-expect-error
       template = getOuterHTML(el)
     }
+    
+
+    // 如果经过上面处理后, 有模板, 开始编译模板为render函数 
     if (template) {
       /* istanbul ignore if */
       if (__DEV__ && config.performance && mark) {
@@ -107,4 +121,5 @@ function getOuterHTML(el: Element): string {
 
 Vue.compile = compileToFunctions
 
+// 原来导出的Vue的最终形态是GlobalAPI类型
 export default Vue as GlobalAPI

@@ -216,6 +216,9 @@ export function defineReactive(
  * Set a property on an object. Adds the new property and
  * triggers change notification if the property doesn't
  * already exist.
+ * 用于在对象或数组中设置属性，并触发响应式更新通知。 
+ * 该方法使用了 TypeScript 的函数重载，根据不同的参数类型执行不同的操作。具体来说，该方法接受三个参数：target，key 和 val。
+ * 其中，target 是要设置属性的对象或数组，key 是要设置的属性名，val 是要设置的属性值。
  */
 export function set<T>(array: T[], key: number, value: T): T
 export function set<T>(object: object, key: string | number, value: T): T

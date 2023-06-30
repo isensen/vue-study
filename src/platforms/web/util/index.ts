@@ -1,7 +1,10 @@
 import { warn } from 'core/util/index'
 
+// attrs 相关的工具函数
 export * from './attrs'
+// css class 相关工具函数
 export * from './class'
+// elements 元素相关工具 
 export * from './element'
 
 /**
