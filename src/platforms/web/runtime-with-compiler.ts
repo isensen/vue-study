@@ -22,6 +22,7 @@ const idToTemplate = cached(id => {
 // Vue hydrating 是指在服务端渲染 (SSR) 中将服务器端生成的 HTML 模板以及数据，与客户端生成的 Vue 实例进行关联，使得客户端可以接管服务器端生成的 HTML 
 // 模板以及数据的状态，继续完成后续的交互与渲染。
 // 先保存原来Vue原型上的$mount方法, 然后再在新定义的$mount里去加一些前置逻辑, 再去调用备份的原来的$mount方法
+// 原先原型上的 $mount 方法在 src/platform/web/runtime/index.js 中定义，之所以这么设计完全是为了复用，因为它是可以被 runtime only 版本的 Vue 直接使用的。
 const mount = Vue.prototype.$mount
 Vue.prototype.$mount = function (
   el?: string | Element,

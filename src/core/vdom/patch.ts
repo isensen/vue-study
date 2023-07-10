@@ -8,14 +8,31 @@
  *
  * Not type-checking this because this file is perf-critical and the cost
  * of making flow understand it is not worth it.
+ * Vue 的虚拟 DOM 算法是基于 Snabbdom 框架的虚拟 DOM 呈现算法进行修改的。
+ * 
+ * 该文件的代码不进行类型检查，因为这个文件的性能非常关键，并且使 flow 理解它的成本不值得 
+ * 
+ * 这个patch算法 也就是Vue的虚拟dom渲染成真正dom的流程
+ * 
+ * 虚拟 DOM 非常有趣，他允许我们以函数的形式来表达视图，但现有的解决方式基本都过于臃肿、性能不佳、功能缺乏、API 偏向于 OOP 或者缺少一些我所需要的功能。
+ * Snabbdom 则极其简单、高效并且可拓展，同时核心代码 ≈ 200 行。提供了一个具有丰富功能同时支持自定义拓展的模块化结构。为了使核心代码更简洁，所有非必要的功能都将模块化引入。
+ * 可以将 Snabbdom 改造成任何你想要的样子！选择或自定义任何你需要的功能。或者使用默认配置，便能获得一个高性能、体积小、拥有下列所有特性的虚拟 DOM 库。
+ * 
  */
 
-import VNode, { cloneVNode } from './vnode'
+import VNode, { cloneVNode } from './vnode' 
 import config from '../config'
+// 这个SSR_ATTR属性用于标识该 HTML 标记是由服务端渲染生成的，而不是客户端渲染生成的。
+// 在服务端渲染完成后，客户端渲染会接管页面并重新渲染，此时客户端会将该属性从标记中删除，以避免对后续交互产生影响。
 import { SSR_ATTR } from 'shared/constants'
+// 用于处理模板中的 ref 属性。
 import { registerRef } from './modules/template-ref'
+// 用于递归遍历对象并收集依赖项
 import { traverse } from '../observer/traverse'
+// 在Vue中，activeInstance 是一个全局变量，用于存储当前正在处理的组件实例。
+// 在组件实例化、更新、销毁等过程中，Vue 会将当前正在处理的组件实例赋值给 activeInstance，以便在需要时进行引用 
 import { activeInstance } from '../instance/lifecycle'
+// isTextInputType 函数用于判断指定元素的 type 属性是否属于文本输入类型，例如 text,number,password,search,email,tel,url 
 import { isTextInputType } from 'web/util/element'
 
 import {
@@ -29,18 +46,34 @@ import {
   isPrimitive
 } from '../util/index'
 
+// 一个没有任何属性和子节点的 VNode 对象，它的 tag 属性为空字符串，data 属性是一个空对象，children 属性是一个空数组。
+// 在 Vue 的渲染过程中，如果需要创建一个空的 VNode 对象，就可以使用 emptyNode 常量来简化代码
 export const emptyNode = new VNode('', {}, [])
 
 const hooks = ['create', 'activate', 'update', 'remove', 'destroy']
 
+// 用于判断两个 VNode 对象是否相同。
+// 需要注意的是，sameVnode 函数只比较 VNode 对象的关键属性，而不会深度比较其子节点。如果需要深度比较两个 VNode 对象及其子节点是否相同，可以使用 patch 函数的其他逻辑来实现。
 function sameVnode(a, b) {
   return (
+    // 首先比较两个 VNode 对象的 key 属性和异步工厂函数（asyncFactory），如果两个属性都相同，则继续进行比较
     a.key === b.key &&
     a.asyncFactory === b.asyncFactory &&
     ((a.tag === b.tag &&
       a.isComment === b.isComment &&
       isDef(a.data) === isDef(b.data) &&
       sameInputType(a, b)) ||
+      // 如果其中一个 VNode 对象是异步占位符，并且另一个 VNode 对象的异步工厂函数存在错误，这时候认为两个 VNode 对象相同
+      // 为什么?
+      // 异步占位符是在异步组件加载过程中使用的，它会先用一个注释节点占位，然后在异步组件加载完成后再替换为实际的组件节点,
+      // 由于异步组件的加载过程是异步的，所以在加载完成前无法确定组件的实际内容，只能用一个注释节点进行占位。当异步组件加载
+      // 完成后，如果加载成功，则会使用实际的组件节点替换注释节点；如果加载失败，则会使用一个错误节点替换注释节点。这个错误
+      // 节点的 isAsyncPlaceholder 属性也会被设置为 true，因此可以和异步占位符进行区分
+      // 如果其中一个 VNode 对象是异步占位符，另一个 VNode 对象是未加载完成的异步组件，此时认为两者相同是因为它们的实际内容
+      // 都还没有确定，只是占位符或者错误节点。这种情况下，不应该将异步组件的错误状态作为两个 VNode 对象不同的依据，因为错误
+      // 状态只是一个中间状态，与实际内容无关。
+      // 因此，如果一个 VNode 对象是异步占位符，并且另一个 VNode 对象的异步工厂函数存在错误，则认为这两个 VNode 对象相同。
+      // 这个判断逻辑可以避免在异步组件加载过程中出现不必要的更新，从而提高性能。
       (isTrue(a.isAsyncPlaceholder) && isUndef(b.asyncFactory.error)))
   )
 }

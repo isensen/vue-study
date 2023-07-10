@@ -83,6 +83,7 @@ export function isValidArrayIndex(val: any): boolean {
   return n >= 0 && Math.floor(n) === n && isFinite(val)
 }
 
+// 检查传入的对象是否是Promise
 export function isPromise(val: any): val is Promise<any> {
   return (
     isDef(val) &&
@@ -139,7 +140,7 @@ export const isBuiltInTag = makeMap('slot,component', true)
 export const isReservedAttribute = makeMap('key,ref,slot,slot-scope,is')
 
 /**
- * Remove an item from an array.
+ * 从数组中删除指定项的函数，其输入参数包括一个数组 arr 和要删除的项 item 
  */
 export function remove(arr: Array<any>, item: any): Array<any> | void {
   const len = arr.length
@@ -179,6 +180,7 @@ export function cached<R>(fn: (str: string) => R): (sr: string) => R {
 
 /**
  * Camelize a hyphen-delimited string.
+ * 连字符变驼峰式
  */
 const camelizeRE = /-(\w)/g
 export const camelize = cached((str: string): string => {
@@ -194,6 +196,7 @@ export const capitalize = cached((str: string): string => {
 
 /**
  * Hyphenate a camelCase string.
+ * 将驼峰式字符串转换为连字符（短横线）风格的字符串。
  */
 const hyphenateRE = /\B([A-Z])/g
 export const hyphenate = cached((str: string): string => {

@@ -3,6 +3,8 @@ import { DebuggerEvent } from 'v3/debug'
 import { SetupContext } from 'v3/apiSetup'
 import { Component } from './component'
 
+// 内部组件类型
+// 我感觉就是根据Vdom初始化组件时的标记
 export type InternalComponentOptions = {
   _isComponent: true
   parent: Component

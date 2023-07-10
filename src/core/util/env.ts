@@ -1,4 +1,6 @@
 // can we use __proto__?
+// 在一些早期的 JavaScript 实现中，可能并不支持 __proto__ 属性，或者该属性存在时表现不一致。
+// 因此，为了确保代码的兼容性，可以使用该代码来判断当前 JavaScript 环境是否支持 __proto__ 属性。
 export const hasProto = '__proto__' in {}
 
 // Browser environment sniffing
@@ -63,6 +65,8 @@ export const hasSymbol =
   typeof Reflect !== 'undefined' &&
   isNative(Reflect.ownKeys)
 
+
+// 如果支持Set,则用原生的Set, 否则做简单的Polyfill
 let _Set // $flow-disable-line
 /* istanbul ignore if */ if (typeof Set !== 'undefined' && isNative(Set)) {
   // use native Set when available.

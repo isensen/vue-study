@@ -3,6 +3,9 @@ import { warn } from 'core/util'
 
 export let activeEffectScope: EffectScope | undefined
 
+// Vue 3.2 版本引入了新的 Effect scope API，使用 effectScope 创建一个 effect 副作用域，可以捕获其中所创建的响应式副作用 (即计算属性和侦听器)，这样捕获到的副作用可以一起处理
+// 这个api是给插件或者库的作者们用的，日常开发并不需要用到它。大意也很简单，就是为了更方便的管理副作用的收集和销毁。
+// EffectScope 类是用于管理响应式作用的范围的，它提供了一些方法和属性，用于控制副作用的创建、执行和销毁。
 export class EffectScope {
   /**
    * @internal

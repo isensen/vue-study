@@ -32,9 +32,14 @@ export function def(obj: Object, key: string, val: any, enumerable?: boolean) {
 
 /**
  * Parse simple path.
+ * 解析简单路径的函数，
+ * 例如，对于一个对象 obj，路径为 a.b.c，则表示要获取 obj.a.b.c 的值。
+ * 函数会将路径分割成三个段落 a、b 和 c，并创建一个闭包函数来解析路径。
+ * 在闭包函数内部，函数会依次获取 obj.a、obj.a.b 和 obj.a.b.c 的值，并返回最终解析出来的值
  */
 const bailRE = new RegExp(`[^${unicodeRegExp.source}.$_\\d]`)
 export function parsePath(path: string): any {
+  // 用于确定路径中是否包含非法字符。如果路径中包含了非法字符，函数将直接返回。
   if (bailRE.test(path)) {
     return
   }

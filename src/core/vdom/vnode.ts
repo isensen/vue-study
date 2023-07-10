@@ -92,6 +92,8 @@ export function createTextVNode(val: string | number) {
 // used for static nodes and slot nodes because they may be reused across
 // multiple renders, cloning them avoids errors when DOM manipulations rely
 // on their elm reference.
+// 用于创建一个浅克隆的 VNode 节点。
+// 这个函数主要用于优化静态节点和插槽节点，因为它们可能会在多个渲染中重复使用，克隆它们可以避免在 DOM 操作中依赖它们的 elm 引用时出现错误
 export function cloneVNode(vnode: VNode): VNode {
   const cloned = new VNode(
     vnode.tag,
@@ -99,6 +101,7 @@ export function cloneVNode(vnode: VNode): VNode {
     // #7975
     // clone children array to avoid mutating original in case of cloning
     // a child.
+    // 子节点数组会被克隆一份以避免对原始数组进行更改
     vnode.children && vnode.children.slice(),
     vnode.text,
     vnode.elm,
@@ -106,6 +109,9 @@ export function cloneVNode(vnode: VNode): VNode {
     vnode.componentOptions,
     vnode.asyncFactory
   )
+
+  // 接下来，传入节点的其他属性赋值给新节点，包括:
+  // 命名空间、是否为静态节点、键、是否为注释节点、函数上下文、函数选项、函数作用域 ID、异步元数据等等。
   cloned.ns = vnode.ns
   cloned.isStatic = vnode.isStatic
   cloned.key = vnode.key
@@ -114,6 +120,7 @@ export function cloneVNode(vnode: VNode): VNode {
   cloned.fnOptions = vnode.fnOptions
   cloned.fnScopeId = vnode.fnScopeId
   cloned.asyncMeta = vnode.asyncMeta
+  // 最后，函数将新节点的 isCloned 属性设置为 true，以表明这是一个克隆节点。
   cloned.isCloned = true
   return cloned
 }

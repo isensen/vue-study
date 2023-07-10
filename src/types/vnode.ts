@@ -19,6 +19,8 @@ export type VNodeChildren =
 
 /**
  * @internal
+ * 这个类型主要用于描述组件VNode节点的选项，例如在创建VNode组件节点时需要使用这些选项来实例化组件并渲染组件的内容。
+ * 由于这个类型是内部使用的，因此不建议在应用程序代码中直接使用它。
  */
 export type VNodeComponentOptions = {
   Ctor: typeof Component

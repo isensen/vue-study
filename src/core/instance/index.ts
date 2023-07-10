@@ -6,6 +6,11 @@ import { lifecycleMixin } from './lifecycle'
 import { warn } from '../util/index'
 import type { GlobalAPI } from 'types/global-api'
 
+// 为什么Vue 不用 ES6 的 Class 去实现呢？后面有很多xxxMixin 的函数调用，并把 Vue 当参数传入，它们的功能都是给 Vue 的 prototype 上扩展一些方法,
+// 按功能把这些扩展分散到多个模块中去实现，而不是在一个模块里实现所有，这种方式是用 Class 难以实现的。这么做的好处是非常方便代码的维护和管理，这种
+// 编程技巧也非常值得我们去学习。
+
+// #initGlobalAPI
 function Vue(options) {
   if (__DEV__ && !(this instanceof Vue)) {
     warn('Vue is a constructor and should be called with the `new` keyword')
@@ -14,6 +19,7 @@ function Vue(options) {
 }
 
 //@ts-expect-error Vue has function type
+//这个里面就有初始化上面的this._init()方法
 initMixin(Vue)
 //@ts-expect-error Vue has function type
 stateMixin(Vue)

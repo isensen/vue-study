@@ -1,3 +1,4 @@
+// nodeOps 模块提供了一组用于操作真实 DOM 的函数。这些函数将在 patch() 函数中被调用，以便将虚拟 DOM 中的更改应用到真实 DOM 中。
 import VNode from 'core/vdom/vnode'
 import { namespaceMap } from 'web/util/index'
 

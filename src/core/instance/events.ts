@@ -3,7 +3,7 @@ import {
   tip,
   toArray,
   isArray,
-  hyphenate,
+  hyphenate, // 驼峰变连字符
   formatComponentName,
   invokeWithErrorHandling
 } from '../util/index'
@@ -29,16 +29,20 @@ function remove(event, fn) {
   target.$off(event, fn)
 }
 
+// 创建一个只执行一次的Handler
 function createOnceHandler(event, fn) {
   const _target = target
   return function onceHandler() {
     const res = fn.apply(null, arguments)
+    // 说明事件有正确执行( undefine 不等同于 null)
     if (res !== null) {
+      //事件有正确执行的话 就移除掉
       _target.$off(event, onceHandler)
     }
   }
 }
 
+// 更新组件事件监听 
 export function updateComponentListeners(
   vm: Component,
   listeners: Object,
