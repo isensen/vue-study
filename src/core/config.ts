@@ -48,7 +48,7 @@ export interface Config {
 
   // 用于解析平台标签名的方法。
   // 在 Vue.js 中，我们可以在 template 模板中使用平台标签名(官方自带)来表示平台特有的组件，例如在 Web 平台中使用 <transition> 标签来表示过渡组件。
-  // 而在编译过程中，需要将平台标签名转换成对应的组件名。parsePlatformTagName 方法就是用来解析平台标签名的，在编译过程中会被调用
+  // 而在编译过程中，需要将平台标签名转换成对应的组件名。
   parsePlatformTagName: (x: string) => string
 
   // 用于判断元素是否为未知元素的方法。

@@ -71,7 +71,16 @@ export function initLifecycle(vm: Component) {
   vm._isBeingDestroyed = false
 }
 
+// _update 是实例的一个私有方法，它被调用的时机有 2 个
+// 1. 一个是首次渲染
+// 2. 一个是数据更新的时候；
+// 由于我们这一章节只分析首次渲染部分，数据更新部分会在之后分析响应式原理的时候涉及。
+//src\core\instance\index.ts 中调用的此方法
+// 定义了三个实例方法 _update、$forceUpdate 和 $destroy。
 export function lifecycleMixin(Vue: typeof Component) {
+
+  // 用于更新组件的视图
+  // _update 的核心就是调用 vm.__patch__ 方法
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this
     const prevEl = vm.$el
@@ -80,14 +89,18 @@ export function lifecycleMixin(Vue: typeof Component) {
     vm._vnode = vnode
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
+    // 调用 vm.__patch__ 方法进行 DOM 的 diff 和更新，具体实现会根据使用的渲染后端而异, 比如 web 和 weex 上的
     if (!prevVnode) {
       // initial render
+      // 如果 prevVnode 不存在，则表示该组件实例是首次渲染，需要将 vnode 渲染成真实的 DOM 并插入到组件实例的 $el 中
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
       // updates
+      // 否则是更新, 需要使用 prevVnode 和 vnode 进行 diff，找到差异并更新 DOM。
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
     restoreActiveInstance()
+
     // update __vue__ reference
     if (prevEl) {
       prevEl.__vue__ = null
@@ -99,9 +112,9 @@ export function lifecycleMixin(Vue: typeof Component) {
     let wrapper: Component | undefined = vm
     while (
       wrapper &&
-      wrapper.$vnode &&
-      wrapper.$parent &&
-      wrapper.$vnode === wrapper.$parent._vnode
+      wrapper.$vnode &&   // 当前组件实例是通过渲染函数或模板生成的 VNode
+      wrapper.$parent &&  // 当前组件实例有父组件
+      wrapper.$vnode === wrapper.$parent._vnode  
     ) {
       wrapper.$parent.$el = wrapper.$el
       wrapper = wrapper.$parent

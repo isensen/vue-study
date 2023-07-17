@@ -37,10 +37,12 @@ export function initRender(vm: Component) {
   // args order: tag, data, children, normalizationType, alwaysNormalize
   // internal version is used by render functions compiled from templates
   // @ts-expect-error
+  // 它是被模板编译成的 render 函数使用
   vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
   // normalization is always applied for the public version, used in
   // user-written render functions.
   // @ts-expect-error
+  // vm.$createElement 是用户手写 render 方法使用的， 这俩个方法支持的参数相同，并且内部都调用了 createElement 方法
   vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
 
   // $attrs & $listeners are exposed for easier HOC creation.
@@ -92,19 +94,27 @@ export function setCurrentRenderingInstance(vm: Component) {
   currentRenderingInstance = vm
 }
 
+// 它用来把实例渲染成一个虚拟 Node
+// 混入渲染相关的方法和属性到 Vue 原型中。
+// src\core\instance\index  中调用的
 export function renderMixin(Vue: typeof Component) {
-  // install runtime convenience helpers
+  // 安装一些运行时方便的帮助函数
+  // 浏览器可以通过VUE开发工具,输出一下VM 实例, 能看到这一堆辅助函数
   installRenderHelpers(Vue.prototype)
 
   Vue.prototype.$nextTick = function (fn: (...args: any[]) => any) {
     return nextTick(fn, this)
   }
 
+  //添加_render方法,  执行渲染函数并返回 VNode
   Vue.prototype._render = function (): VNode {
     const vm: Component = this
+
+    // 首先会获取渲染函数和父级 VNode
     const { render, _parentVnode } = vm.$options
 
     if (_parentVnode && vm._isMounted) {
+      // 将作用域插槽对象进行规范化处理
       vm.$scopedSlots = normalizeScopedSlots(
         vm.$parent!,
         _parentVnode.data!.scopedSlots,
@@ -125,6 +135,9 @@ export function renderMixin(Vue: typeof Component) {
       // There's no need to maintain a stack because all render fns are called
       // separately from one another. Nested component's render fns are called
       // when parent component is patched.
+      // 英文注释是说: 没有必要维护一个堆栈(像watchter一样嵌套式的恢复上下文可以)，因为所有的render fns都是相互独立调用的。
+      // 嵌套式组件的render fns在父组件被patch时被调用。
+      // 在渲染过程中设置当前实例和当前渲染实例
       setCurrentInstance(vm)
       currentRenderingInstance = vm
       vnode = render.call(vm._renderProxy, vm.$createElement)

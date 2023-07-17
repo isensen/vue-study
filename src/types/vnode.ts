@@ -84,6 +84,8 @@ export type VNodeWithData = VNode & {
 
 /**
  * @internal
+ * VNodeData 是创建render函数时, 传入的data, 可以参考https://v2.cn.vuejs.org/v2/guide/render-function.html
+ * 如果是要写render函数, 了解这个很重要
  */
 export interface VNodeData {
   key?: string | number                                         // 表示虚拟节点的唯一标识符。

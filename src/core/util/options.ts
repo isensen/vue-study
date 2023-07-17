@@ -489,12 +489,16 @@ export function mergeOptions(
  * Resolve an asset.
  * This function is used because child instances need access
  * to assets defined in its ancestor chain.
+ * 用于从 Vue 实例的选项中解析出指定的实例成员。
+ * 在 Vue 中，每个组件实例都有一个选项对象，其中包含了组件的数据、方法、计算属性、指令、过滤器、组件等成员。
+ * 这些成员可以通过实例的 $options 属性或静态的 options 属性进行访问。resolveAsset 函数的作用就是从这些
+ * 选项中解析出指定的成员，并返回它
  */
 export function resolveAsset(
-  options: Record<string, any>,
-  type: string,
-  id: string,
-  warnMissing?: boolean
+  options: Record<string, any>,     // options 表示选项对象
+  type: string,                     // 要解析的成员类型, 例如 components、directives、filters 等
+  id: string,                       // 要解析的成员名称
+  warnMissing?: boolean             // 是否在解析失败时发出警告
 ): any {
   /* istanbul ignore if */
   if (typeof id !== 'string') {

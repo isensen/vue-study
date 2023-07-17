@@ -11,6 +11,7 @@ import { resolveScopedSlots } from './resolve-scoped-slots'
 import { bindDynamicKeys, prependModifier } from './bind-dynamic-keys'
 
 export function installRenderHelpers(target: any) {
+  //浏览器可以通过VUE开发工具,输出一下VM 实例, 能看到这一堆辅助函数
   target._o = markOnce
   target._n = toNumber
   target._s = toString

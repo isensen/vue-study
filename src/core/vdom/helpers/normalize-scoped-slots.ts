@@ -6,18 +6,32 @@ import type VNode from '../vnode'
 import { Component } from 'types/component'
 import { currentInstance, setCurrentInstance } from 'v3/currentInstance'
 
+// Vue 中, 作用域插槽的实现是通过将插槽内容包装成一个函数，并将函数作为属性传递给子组件。
+// 在子组件的渲染函数中，可以通过访问特殊的 $scopedSlots 属性来获取作用域插槽函数，并将
+// 函数执行的结果插入到组件的 DOM 结构中
+// normalizeScopedSlots 方法的作用是将作用域插槽对象进行规范化处理，以便在组件的渲染函数中使用
 export function normalizeScopedSlots(
-  ownerVm: Component,
+  // 父级组件实例 ownerVm
+  ownerVm: Component,             
+  // 作用域插槽对象 scopedSlots
   scopedSlots: { [key: string]: Function } | undefined,
+  // 普通插槽对象 normalSlots
   normalSlots: { [key: string]: VNode[] },
+  // 上一个规范化后的作用域插槽对象 prevScopedSlots
   prevScopedSlots?: { [key: string]: Function }
 ): any {
+
   let res
   const hasNormalSlots = Object.keys(normalSlots).length > 0
+  // 在 Vue.js 中，稳定的作用域插槽是指传递给子组件的插槽内容在父组件更新时不会改变，因此子组件无需重新渲染。
   const isStable = scopedSlots ? !!scopedSlots.$stable : !hasNormalSlots
   const key = scopedSlots && scopedSlots.$key
+
+  // 判断作用域插槽对象是否存在
   if (!scopedSlots) {
     res = {}
+
+  // 已经规范化过
   } else if (scopedSlots._normalized) {
     // fast path 1: child component re-render only, parent did not change
     return scopedSlots._normalized
@@ -31,9 +45,11 @@ export function normalizeScopedSlots(
   ) {
     // fast path 2: stable scoped slots w/ no normal slots to proxy,
     // only need to normalize once
+    // 稳定的作用域插槽且没有普通插槽需要代理，只需要规范化一次就可以了。
     return prevScopedSlots
   } else {
     res = {}
+    // 遍历作用域插槽对象中的每个属性，并调用  normalizeScopedSlot 方法对每个属性进行规范化处理
     for (const key in scopedSlots) {
       if (scopedSlots[key] && key[0] !== '$') {
         res[key] = normalizeScopedSlot(

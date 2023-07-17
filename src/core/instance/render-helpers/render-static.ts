@@ -28,6 +28,7 @@ export function renderStatic(
 /**
  * Runtime helper for v-once.
  * Effectively it means marking the node as static with a unique key.
+ * 用于标记 VNode 节点为静态节点，并添加一个唯一的标识符作为节点的 key 属性值
  */
 export function markOnce(
   tree: VNode | Array<VNode>,

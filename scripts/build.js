@@ -8,9 +8,11 @@ if (!fs.existsSync('dist')) {
   fs.mkdirSync('dist')
 }
 
+// 所有的构建项
 let builds = require('./config').getAllBuilds()
 
 // filter builds via command line arg
+// 可以根据命令参数来选择要构建什么, 可以构建出不同用途的 Vue.js 
 if (process.argv[2]) {
   const filters = process.argv[2].split(',')
   builds = builds.filter(b => {
