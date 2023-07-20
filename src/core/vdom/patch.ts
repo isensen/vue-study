@@ -86,6 +86,7 @@ function sameInputType(a, b) {
   return typeA === typeB || (isTextInputType(typeA) && isTextInputType(typeB))
 }
 
+// 它返回一个对象（映射），其中键是每个子元素的 "key" 属性的值
 function createKeyToOldIdx(children, beginIdx, endIdx) {
   let i, key
   const map = {}
@@ -96,25 +97,48 @@ function createKeyToOldIdx(children, beginIdx, endIdx) {
   return map
 }
 
+
+// Virtual DOM 是对实际 DOM 的抽象表示，可以通过它来进行高效的 DOM 操作和更新。
+// createPatchFunction 函数是 Vue.js 内部用于创建 patch 函数的工厂函数之一，
+// 用于生成将 Virtual DOM 转换为真实 DOM 的函数
+
+// 接收一个配置对象，该对象包含了一些用于对 Virtual DOM 进行操作的函数，例如:
+// 创建节点、更新节点、删除节点等。这些函数通常是特定平台（例如浏览器、Weex 等）
+// 的实现，因此这个配置对象可以根据不同的平台进行定制。
+
+// 函数返回一个 patch 函数，patch 函数接收两个参数：旧的 Virtual DOM 树和新的 
+// Virtual DOM 树。patch 函数将比较这两个树的差异，然后将这些差异应用到真实的 
+// DOM 树上，以更新 UI。
 export function createPatchFunction(backend) {
   let i, j
+  // 创建了一个空对象 cbs，用于存储钩子函数
   const cbs: any = {}
 
+  // modules 是一个数组，它包含了一些模块，这些模块中实现了操作 Virtual DOM 树的各种方法
+  // \src\platforms\web\runtime\patch.ts 中调用时传入的
+  // 可以去上面文件里看一下, modules 和 nodeOps引入的文件,里面给每个操作都定义了 create update 等属性
   const { modules, nodeOps } = backend
 
   for (i = 0; i < hooks.length; ++i) {
+    // hooks 是一个数组，它包含所需的钩子函数的名称，例如 "create"、"update" 等
+    // 这里相当于初始化
     cbs[hooks[i]] = []
     for (j = 0; j < modules.length; ++j) {
       if (isDef(modules[j][hooks[i]])) {
+        // modules 和 nodeOps引入的文件,里面给每个操作都定义了 create update 等属性
         cbs[hooks[i]].push(modules[j][hooks[i]])
       }
     }
   }
 
+  // 用于创建一个空节点, 它没有子节点和属性，但具有指定的节点名称(elm.tagName)
   function emptyNodeAt(elm) {
     return new VNode(nodeOps.tagName(elm).toLowerCase(), {}, [], undefined, elm)
   }
 
+  // createRmCb函数做用是移除dom元素。在removeVnodes函数会调用。
+  // createRmCb函数里有if (--listeners === 0)这个断定条件，这个是针对模块钩子函数的断定条件。
+  // 只有当全部的remove hook调用完了，才会移除dom。
   function createRmCb(childElm, listeners) {
     function remove() {
       if (--remove.listeners === 0) {
@@ -125,19 +149,22 @@ export function createPatchFunction(backend) {
     return remove
   }
 
+  // 删除节点
   function removeNode(el) {
-    const parent = nodeOps.parentNode(el)
+    const parent = nodeOps.parentNode(el) //获取父节点
     // element may have already been removed due to v-html / v-text
     if (isDef(parent)) {
       nodeOps.removeChild(parent, el)
     }
   }
 
+  // 用于判断一个节点是否为未知元素
   function isUnknownElement(vnode, inVPre) {
     return (
-      !inVPre &&
-      !vnode.ns &&
+      !inVPre &&     //inVPre 为false 或undefine等
+      !vnode.ns &&   // vnode没有命令空间
       !(
+        // 下面会验证配置中设置的忽略原则等
         config.ignoredElements.length &&
         config.ignoredElements.some(ignore => {
           return isRegExp(ignore)
@@ -151,25 +178,35 @@ export function createPatchFunction(backend) {
 
   let creatingElmInVPre = 0
 
+  // 主要逻辑在于创建真实的 dom 节点 vnode.elm
+  // 用于创建真实 DOM 元素并将其插入到父元素中
   function createElm(
     vnode,
     insertedVnodeQueue,
     parentElm?: any,
-    refElm?: any,
-    nested?: any,
+    refElm?: any,        // 这个应该是插入位置 ? 比如一个div下面有很多span, 你插入在哪个span位置 ? 
+    nested?: any,        //表示是否为嵌套的子元素
     ownerArray?: any,
     index?: any
   ) {
+
+    // 首先检查 VNode 是否已经存在 elm 属性
     if (isDef(vnode.elm) && isDef(ownerArray)) {
-      // This vnode was used in a previous render!
+      // This vnode was used in a previous render! 
       // now it's used as a new node, overwriting its elm would cause
       // potential patch errors down the road when it's used as an insertion
       // reference node. Instead, we clone the node on-demand before creating
       // associated DOM element for it.
+      // 这个 vnode 曾在之前的渲染中使用过！现在它被用作一个新节点，如果覆盖其(elm)元素属性，
+      // 那么当它被用作插入参考节点时，就会导致潜在的patch错误。
+      // 取而代之的是，我们会按需克隆节点，然后再为其创建相关的 DOM 元素。
       vnode = ownerArray[index] = cloneVNode(vnode)
     }
 
+    // transition 入口检查使用
     vnode.isRootInsert = !nested // for transition enter check
+
+    // createComponent 方法目的是尝试创建子组件
     if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
       return
     }
@@ -194,21 +231,27 @@ export function createPatchFunction(backend) {
         }
       }
 
+      // 调用平台 DOM 的操作去创建一个占位符元素。
       vnode.elm = vnode.ns
         ? nodeOps.createElementNS(vnode.ns, tag)
         : nodeOps.createElement(tag, vnode)
       setScope(vnode)
 
+      // 创建子元素
       createChildren(vnode, children, insertedVnodeQueue)
       if (isDef(data)) {
+        // 执行所有的 create 的钩子并把 vnode push 到 insertedVnodeQueue
         invokeCreateHooks(vnode, insertedVnodeQueue)
       }
+      // 最后调用 insert 方法把 DOM 插入到父节点中，因为是递归调用，子元素会优先调用 insert，所以整个 vnode 树节点的插入顺序是先子后父。
       insert(parentElm, vnode.elm, refElm)
 
       if (__DEV__ && data && data.pre) {
         creatingElmInVPre--
       }
-    } else if (isTrue(vnode.isComment)) {
+    }
+    // 如果 vnode 节点不包含 tag，则它有可能是一个注释或者纯文本节点，可以直接插入到父元素中
+    else if (isTrue(vnode.isComment)) {
       vnode.elm = nodeOps.createComment(vnode.text)
       insert(parentElm, vnode.elm, refElm)
     } else {
@@ -217,18 +260,26 @@ export function createPatchFunction(backend) {
     }
   }
 
+  // 函数用于创建组件的 VNode 节点，并将其挂载到父元素中
+  // 接收一个 VNode 对象、一个插入队列、一个父元素和一个参考元素。
   function createComponent(vnode, insertedVnodeQueue, parentElm, refElm) {
     let i = vnode.data
+    // 检查是否有数据对象
     if (isDef(i)) {
       const isReactivated = isDef(vnode.componentInstance) && i.keepAlive
+      // 如果有hook , 并且有init,并且把init赋值给i
       if (isDef((i = i.hook)) && isDef((i = i.init))) {
+        //相当于执行init
         i(vnode, false /* hydrating */)
       }
       // after calling the init hook, if the vnode is a child component
       // it should've created a child instance and mounted it. the child
       // component also has set the placeholder vnode's elm.
       // in that case we can just return the element and be done.
+      // 调用 init 钩子后，如果 vnode 是一个子组件 它应该已经创建了一个子实例并加载了它
+      // 子组件还设置了占位符 vnode 的 elm, 在这种情况下，我们只需返回元素就可以了。
       if (isDef(vnode.componentInstance)) {
+        // 调用 initComponent 函数对组件进行初始化，并将其挂载到父元素中
         initComponent(vnode, insertedVnodeQueue)
         insert(parentElm, vnode.elm, refElm)
         if (isTrue(isReactivated)) {
@@ -266,6 +317,8 @@ export function createPatchFunction(backend) {
     // does not trigger because the inner node's created hooks are not called
     // again. It's not ideal to involve module-specific logic in here but
     // there doesn't seem to be a better way to do it.
+    // 带有内部 transition 的重新激活组件不会触发，因为内部节点创建的钩子不会再次被调用。
+    // 在这里涉及特定模块的逻辑并不理想，但似乎没有更好的办法。
     let innerNode = vnode
     while (innerNode.componentInstance) {
       innerNode = innerNode.componentInstance._vnode
@@ -294,6 +347,9 @@ export function createPatchFunction(backend) {
     }
   }
 
+  // 创建子元素
+  // createChildren 的逻辑很简单，实际上是遍历子虚拟节点，递归调用 createElm，这是一种常用的深度优先的遍历算法，
+  // 这里要注意的一点是在遍历过程中会把 vnode.elm 作为父容器的 DOM 节点占位符传入。
   function createChildren(vnode, children, insertedVnodeQueue) {
     if (isArray(children)) {
       if (__DEV__) {
@@ -315,6 +371,18 @@ export function createPatchFunction(backend) {
     }
   }
 
+  // isPatchable 函数是用于检查给定的 VNode 是否可以进行补丁操作的函数。在 Vue 中，当我们更新组件的状态时，
+  // 它会重新渲染组件的 VNode 树，并将新的 VNode 树与旧的 VNode 树进行比较，以确定哪些部分需要更新。在这个过程中，
+  // Vue 只会尽可能地复用旧的 VNode 对象，而不是创建新的 VNode 对象。
+
+  // 总之，isPatchable 函数在 Vue 的 Virtual DOM 更新过程中用于确定哪些 VNode 能够进行补丁操作，它通过递归地检查 VNode 
+  // 树中的子树，来确定一个 VNode 是否具有 tag 属性
+
+  // 当一个组件被渲染时，Vue 会将组件的渲染函数转换为一个 VNode 对象，该对象包含了组件实例所需的所有信息，包括组件的 props、
+  // slots、事件等。这个 VNode 对象被称为组件的根 VNode，它的 componentInstance 属性指向组件实例本身，而不是具体的 DOM 元素。
+  // vnode.componentInstance 对象上的 _vnode 属性是指向组件根 VNode 对象的引用。由于组件根 VNode 对象可能包含其他子组件的 
+  // VNode 对象，因此在渲染组件时，如果我们需要递归地访问组件树中的所有 VNode 对象，则可以使用 _vnode 属性来获取组件根 VNode 
+  // 对象，然后遍历其子节点。
   function isPatchable(vnode) {
     while (vnode.componentInstance) {
       vnode = vnode.componentInstance._vnode
@@ -381,13 +449,19 @@ export function createPatchFunction(backend) {
     }
   }
 
+
+  // 调用 destory hook
   function invokeDestroyHook(vnode) {
     let i, j
     const data = vnode.data
     if (isDef(data)) {
+      //调用  data hook 的destory
       if (isDef((i = data.hook)) && isDef((i = i.destroy))) i(vnode)
+      //调用 cbs的 destory
       for (i = 0; i < cbs.destroy.length; ++i) cbs.destroy[i](vnode)
     }
+
+    //还得调用子的destory
     if (isDef((i = vnode.children))) {
       for (j = 0; j < vnode.children.length; ++j) {
         invokeDestroyHook(vnode.children[j])
@@ -622,6 +696,7 @@ export function createPatchFunction(backend) {
     index,
     removeOnly?: any
   ) {
+    // 当 vnode 本身就是 oldVnode 时，无需更新，直接返回
     if (oldVnode === vnode) {
       return
     }
@@ -831,29 +906,56 @@ export function createPatchFunction(backend) {
     }
   }
 
+
+  // createPatchFunction 内部定义了一系列的辅助方法，最终返回了一个 patch 方法，这个方法就赋值给了 vm._update 函数里调用的 vm.__patch__。
+  // 它是 Virtual DOM 的核心函数，用于将新的 VNode 树转换为真实的 DOM 树，同时尽可能地复用旧的 DOM 元素。
+  // 它接收旧的 VNode 对象、新的 VNode 对象、一个标志表示是否为渲染、一个标志表示是否仅删除 DOM 元素。
   return function patch(oldVnode, vnode, hydrating, removeOnly) {
-    if (isUndef(vnode)) {
+
+    // 如果新vnode不存在, 再如果有旧的vnode, 直接销毁旧的
+    if (isUndef(vnode)) { 
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)
       return
     }
 
     let isInitialPatch = false
+    // insertedVnodeQueue 用于保存已插入的 VNode 节点，目的是在所有的 DOM 操作完成后触发它们的插入钩子函数（insert hook）。
+    // 这个队列的作用是确保在所有 VNode 插入到 DOM 树中后才触发它们的插入钩子函数，以便确保它们被插入到正确的位置。
     const insertedVnodeQueue: any[] = []
 
+
+    //如果没有旧的oldNode,说明是首次 patch
     if (isUndef(oldVnode)) {
       // empty mount (likely as component), create new root element
       isInitialPatch = true
+      // 创建一个新的根元素并将其挂载到文档中
+      // (没有传入第三个参数parent, 所以是根元素)
       createElm(vnode, insertedVnodeQueue)
+
     } else {
+      // 检查旧的 VNode 是否是真实的 DOM 元素
       const isRealElement = isDef(oldVnode.nodeType)
+      // 并检查新的 VNode 是否与旧的 VNode 相同
       if (!isRealElement && sameVnode(oldVnode, vnode)) {
         // patch existing root node
+        // 调用 patchVnode 函数来更新旧的 VNode
         patchVnode(oldVnode, vnode, insertedVnodeQueue, null, null, removeOnly)
       } else {
+        // 如果旧的 VNode 是真实的 DOM 元素，则将其转换为一个空的 VNode
         if (isRealElement) {
           // mounting to a real element
           // check if this is server-rendered content and if we can perform
           // a successful hydration.
+          // 是否是 服务端渲染内容
+          // oldVnode.nodeType === 1 是一个条件判断语句，用于检查 oldVnode 是否为 DOM 元素节点（Element）。
+          // 在 DOM 中，每个节点都有一个 nodeType 属性，它是一个整数，代表节点的类型。其中: 
+          // 1 表示元素节点（Element），2 表示属性节点（Attribute），3 表示文本节点（Text），8 表示注释节点（Comment），
+          // 9 表示文档节点（Document），10 表示文档类型节点（DocumentType）等。
+          // 在这段代码中，如果 oldVnode 是一个 DOM 元素节点，则会执行以下操作：
+          // 1. 检查该元素是否有 SSR_ATTR 属性。如果有，则将其移除，并将 hydrating 标志设置为 true。
+          // 2. 检查 hydrating 标志是否为 true。如果为 true，则尝试对该元素进行服务端渲染的水合（hydration）操作。
+          // 3. 如果水合操作成功，则调用 invokeInsertHook 函数触发插入钩子函数，并返回该元素。
+          // 4. 如果水合操作失败，则在控制台输出警告信息，并继续执行后续的操作。
           if (oldVnode.nodeType === 1 && oldVnode.hasAttribute(SSR_ATTR)) {
             oldVnode.removeAttribute(SSR_ATTR)
             hydrating = true
@@ -863,6 +965,7 @@ export function createPatchFunction(backend) {
               invokeInsertHook(vnode, insertedVnodeQueue, true)
               return oldVnode
             } else if (__DEV__) {
+              // 客户端呈现的虚拟DOM树与服务器呈现的内容不匹配。这可能是由于不正确的HTML标记造成的，例如在< p>中嵌套块级元素，或者缺少< tbody>
               warn(
                 'The client-side rendered virtual DOM tree is not matching ' +
                   'server-rendered content. This is likely caused by incorrect ' +
@@ -874,25 +977,34 @@ export function createPatchFunction(backend) {
           }
           // either not server-rendered, or hydration failed.
           // create an empty node and replace it
+          // 要么服务器未渲染，要么水合失败。创建一个空节点并替换它
           oldVnode = emptyNodeAt(oldVnode)
         }
 
+        // 能走到这里, 分支是:如果有旧的vnode, 如果旧的vode不是真实dom 或 新与旧不相同,
         // replacing existing element
         const oldElm = oldVnode.elm
         const parentElm = nodeOps.parentNode(oldElm)
 
         // create new node
+        // 创建新的 DOM 元素并将其插入到文档中
         createElm(
           vnode,
           insertedVnodeQueue,
           // extremely rare edge case: do not insert if old element is in a
           // leaving transition. Only happens when combining transition +
           // keep-alive + HOCs. (#4590)
+          // 极其罕见的边缘情况：如果旧元素处于transitionr的 leaving中，则不插入。
+          // 只有在结合 transition +  keep-alive + HOC 时才会发生。(#4590)
           oldElm._leaveCb ? null : parentElm,
           nodeOps.nextSibling(oldElm)
         )
 
         // update parent placeholder node element, recursively
+        // 用于处理旧的 VNode 节点被替换或移动的情况
+        // 如果新的 VNode 有父节点，则递归地更新其父节点
+        // (createElm可以看到, 虽然是新建的节点,但是它的父节点还是原来的)
+        // 如果旧的 VNode 节点有父节点 vnode.parent，则遍历它的祖先节点，并依次执行它们的 destroy 钩子函数
         if (isDef(vnode.parent)) {
           let ancestor = vnode.parent
           const patchable = isPatchable(vnode)
@@ -900,7 +1012,9 @@ export function createPatchFunction(backend) {
             for (let i = 0; i < cbs.destroy.length; ++i) {
               cbs.destroy[i](ancestor)
             }
+            // 这些祖先节点的 elm 属性会被更新为新的 VNode 节点的 elm 属性
             ancestor.elm = vnode.elm
+            // 并且如果新的 VNode 节点是可patch的（即具有 tag 属性），则会依次执行它们的 create 钩子函数
             if (patchable) {
               for (let i = 0; i < cbs.create.length; ++i) {
                 cbs.create[i](emptyNode, ancestor)

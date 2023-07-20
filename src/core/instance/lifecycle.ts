@@ -93,6 +93,9 @@ export function lifecycleMixin(Vue: typeof Component) {
     if (!prevVnode) {
       // initial render
       // 如果 prevVnode 不存在，则表示该组件实例是首次渲染，需要将 vnode 渲染成真实的 DOM 并插入到组件实例的 $el 中
+      // vnode 对应的是调用 render 函数的返回值
+      // hydrating 在非服务端渲染情况下为 false
+      // 最后一个参数是 removeOnly 是给 transition-group 用的
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
       // updates
@@ -112,7 +115,7 @@ export function lifecycleMixin(Vue: typeof Component) {
     let wrapper: Component | undefined = vm
     while (
       wrapper &&
-      wrapper.$vnode &&   // 当前组件实例是通过渲染函数或模板生成的 VNode
+      wrapper.$vnode &&   // 当前组件实例是通过渲染函数或模板生成的 VNode(不是人工)
       wrapper.$parent &&  // 当前组件实例有父组件
       wrapper.$vnode === wrapper.$parent._vnode  
     ) {

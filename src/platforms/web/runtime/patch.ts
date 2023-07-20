@@ -26,4 +26,14 @@ const modules = platformModules.concat(baseModules)
 // 在 patch 的过程中，根据差异对象中保存的信息，会对真实的 DOM 树进行添加、删除、替换、移动等操作，从而使其与新的虚拟 DOM 树保持一致。
 
 // 总的来说，"diff"和"patch" 是虚拟 DOM 在组件更新时的核心算法，它们是通过比较新旧虚拟 DOM 树之间的差异，尽可能地减少对真实 DOM 树的操作次数，从而实现高效、快速的组件更新和渲染。
+// nodeOps 封装了一系列 DOM 操作的方法，modules 定义了一些模块的钩子函数的实现
+
+// createPatchFunction 内部定义了一系列的辅助方法，最终返回了一个 patch 方法，这个方法就赋值给了 vm._update 函数里调用的 vm.__patch__
+
+// 在介绍 patch 的方法实现之前，我们可以思考一下为何 Vue.js 源码绕了这么一大圈，把相关代码分散到各个目录。因为前面介绍过，patch 是平台相关的，在 Web 和 Weex 环境，
+// 它们把虚拟 DOM 映射到 “平台 DOM” 的方法是不同的，并且对 “DOM” 包括的属性模块创建和更新也不尽相同。因此每个平台都有各自的 nodeOps 和 modules，它们的代码需要托管
+// 在 src/platforms 这个大目录下
+// 而不同平台的 patch 的主要逻辑部分是相同的，所以这部分公共的部分托管在 core 这个大目录下。差异化部分只需要通过参数来区别，这里用到了一个函数柯里化的技巧，通过 
+// createPatchFunction 把差异化参数提前固化，这样不用每次调用 patch 的时候都传递 nodeOps 和 modules 了
+// nodeOps 表示对 “平台 DOM” 的一些操作方法，modules 表示平台的一些模块，它们会在整个 patch 过程的不同阶段执行相应的钩子函数
 export const patch: Function = createPatchFunction({ nodeOps, modules })
